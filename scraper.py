@@ -6,8 +6,12 @@ from bs4 import BeautifulSoup
 import variables
 import similarity
 
-# Accumulates the word counts other than stop words for the report
-word_counts = {} #3
+# Report data: unique pages, longest page, word counts, subdomains
+unique_pages = set()  # defragmented URLs (fragment removed) - for "how many unique pages"
+longest_page_url = ""  # URL of page with most words
+longest_page_count = 0  # word count of longest page
+word_counts = {}  # word -> count (excluding stop words) - for "50 most common words"
+subdomains = {}  # subdomain -> set of defragmented URLs - for "subdomains with page counts"
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -84,9 +88,25 @@ def extract_next_links(url, resp):
     if similarity.is_duplicate_page(text):
         return []
 
+    # Record this page for the report (unique pages, longest page, subdomains)
+    page_url_defrag, _ = urldefrag(base_url)
+    unique_pages.add(page_url_defrag)
+    
+    # Get subdomain (netloc) for subdomain counts
+    parsed = urlparse(page_url_defrag)
+    subdomain = (parsed.netloc or "").lower()
+    if subdomain:
+        if subdomain not in subdomains:
+            subdomains[subdomain] = set()
+        subdomains[subdomain].add(page_url_defrag)
+
     # Count words (ignore stop words) for the report that will be made
     try:
         words = re.findall(r"[a-zA-Z0-9]+", text.lower())
+        total_words = len(words)  # all words (for longest page)
+        if total_words > longest_page_count:
+            longest_page_url = page_url_defrag
+            longest_page_count = total_words
         for w in words:
             if w and w not in variables.stop_words:
                 word_counts[w] = word_counts.get(w, 0) + 1
