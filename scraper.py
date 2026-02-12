@@ -105,6 +105,7 @@ def extract_next_links(url, resp):
 
     # Count words (ignore stop words) for the report that will be made
     try:
+        global longest_page_url, longest_page_count
         words = re.findall(r"[a-zA-Z0-9]+", text.lower())
         total_words = len(words)  # all words (for longest page)
         if total_words > longest_page_count:
@@ -150,9 +151,7 @@ def extract_next_links(url, resp):
     return out_list
 
 def print_and_save_report():
-    '''Print and save the 4 report metrics to report.txt'''
-    global _page_count
-
+    """Print and save the 4 report metrics to report.txt in a simple way."""
     # Only print/save every 10 pages to avoid too much output
     if _page_count % 10 != 0:
         return
@@ -161,33 +160,51 @@ def print_and_save_report():
     unique_count = len(unique_pages)
 
     # 2. Longest page
-    longest_info = f"{longest_page_url} ({longest_page_count} words)" if longest_page_url else "None yet"
+    if longest_page_url:
+        longest_info = f"{longest_page_url} ({longest_page_count} words)"
+    else:
+        longest_info = "None yet"
 
     # 3. Top 50 words (excluding stop words)
-    top50 = sorted(word_counts.items(), key=lambda x: (-x[1], x[0]))[:50]
-    top50_str = "\n   ".join([f"{i+1:2}. {word}: {count}" for i, (word, count) in enumerate(top50)])
+    top_items = sorted(word_counts.items(), key=lambda x: (-x[1], x[0]))[:50]
+    top_lines = []
+    index = 1
+    for word, count in top_items:
+        top_lines.append(f"{index}. {word}: {count}")
+        index += 1
+    if top_lines:
+        top_block = "\n".join(top_lines)
+    else:
+        top_block = "(none yet)"
 
     # 4. Subdomains (alphabetically) with counts
-    subdomain_list = sorted([(k, len(v)) for k, v in subdomains.items()])
-    subdomain_str = "\n   ".join([f"{subdomain}, {count}" for subdomain, count in subdomain_list])
+    sub_items = sorted(subdomains.items())
+    sub_lines = []
+    for sub, urls in sub_items:
+        sub_lines.append(f"{sub}, {len(urls)}")
+    if sub_lines:
+        sub_block = "\n".join(sub_lines)
+    else:
+        sub_block = "(none yet)"
 
-    report_text = f"""
-        CRAWLER REPORT (as of {_page_count} pages processed)
-        {'='*60}
+    # Put everything together as simple lines
+    lines = []
+    lines.append(f"CRAWLER REPORT (as of {_page_count} pages processed)")
+    lines.append("=" * 60)
+    lines.append("")
+    lines.append(f"1. Unique pages (by URL, fragment discarded): {unique_count}")
+    lines.append("")
+    lines.append("2. Longest page (by word count, HTML not counted):")
+    lines.append(longest_info)
+    lines.append("")
+    lines.append("3. Top 50 most common words (excluding stop words), by frequency:")
+    lines.append(top_block)
+    lines.append("")
+    lines.append("4. Subdomains in uci.edu (alphabetically), with unique page count:")
+    lines.append(sub_block)
+    lines.append("=" * 60)
 
-        1. Unique pages (by URL, fragment discarded): {unique_count}
-
-        2. Longest page (by word count, HTML not counted):
-        {longest_info}
-
-        3. Top 50 most common words (excluding stop words), by frequency:
-        {top50_str if top50_str else '   (none yet)'}
-
-        4. Subdomains in uci.edu (alphabetically), with unique page count:
-        {subdomain_str if subdomain_str else '   (none yet)'}
-
-        {'='*60}
-        """
+    report_text = "\n".join(lines)
 
     print(report_text)
 
