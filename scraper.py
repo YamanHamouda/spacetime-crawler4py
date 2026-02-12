@@ -1,17 +1,15 @@
-# scraper.py
-
 import re
 from urllib.parse import urlparse, urljoin, urldefrag
 from bs4 import BeautifulSoup
 import variables
 import similarity
 
-# Report data: unique pages, longest page, word counts, subdomains
-unique_pages = set()  # defragmented URLs (fragment removed) - for "how many unique pages"
-longest_page_url = ""  # URL of page with most words
-longest_page_count = 0  # word count of longest page
-word_counts = {}  # word -> count (excluding stop words) - for "50 most common words"
-subdomains = {}  # subdomain -> set of defragmented URLs - for "subdomains with page counts"
+#Report data: unique pages, longest page, word counts, subdomains
+unique_pages = set()  #defragmented URLs
+longest_page_url = ""  #URL of page with most words
+longest_page_count = 0  #word count of longest page
+word_counts = {}  #50 most common words
+subdomains = {}  #subdomains with page counts
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -113,7 +111,7 @@ def extract_next_links(url, resp):
     except Exception:
         pass
 
-    # Collect links from every <a href="..."> inside
+    
     out_list = []   # links we will return which is one per URL from this page
     seen_set = set()  # URLs we already added from this page, skipping duplicates within the same page to maximize efficiency
     
