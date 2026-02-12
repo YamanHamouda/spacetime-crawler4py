@@ -1,5 +1,13 @@
+# scraper.py
+
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
+from bs4 import BeautifulSoup
+import variables
+import similarity
+
+# Accumulates the word counts other than stop words for the report
+word_counts = {}
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -15,9 +23,117 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+
+    # Abubakr and Adan worked on this function together
+
+    # Only handle successful responses with a real response body that isn't empty, None, or False
+    if not resp or not resp.raw_response:
+        return []
+    
+    if resp.status != 200:
+        return []
+
+    raw = resp.raw_response
+    try:
+        content = raw.content
+    except AttributeError:
+        return []
+
+    if not content:
+        return []
+
+    # Current page URL that the crawler is on, it will turn short links into full URLs which is important
+    base_url = url
+    try:
+        if resp.url:
+            base_url = resp.url
+
+        if raw.url:
+            base_url = raw.url
+    except AttributeError:
+        pass
+
+    if not base_url:
+        return []
+
+    # Decode the bytes and turn it into a string so that the crawler can parse HTML
+    if isinstance(content, bytes):
+        encoding = "utf-8"
+        try:
+            if raw.encoding:
+                encoding = raw.encoding
+        except AttributeError:
+            pass
+
+        try:
+            content = content.decode(encoding, errors="replace")
+        except Exception:
+            content = content.decode("utf-8", errors="replace")
+
+    if not isinstance(content, str):
+        return []
+
+    # Parse HTML with Beautiful Soup
+    try:
+        soup = BeautifulSoup(content, "lxml")
+    except Exception:
+        return []
+
+    # Skip exact or near-duplicate pages (extra credit) to improve effiency
+    text = soup.get_text(separator=" ", strip=True)
+    if similarity.is_duplicate_page(text):
+        return []
+
+    # Count words (ignore stop words) for the report that will be made
+    try:
+        words = re.findall(r"[a-zA-Z0-9]+", text.lower())
+        for w in words:
+            if w and w not in variables.stop_words:
+                word_counts[w] = word_counts.get(w, 0) + 1
+    except Exception:
+        pass
+
+    # Collect links from every <a href="..."> inside
+    out_list = []
+    seen_set = set()
+    for tag in soup.find_all("a", href=True):
+        href = tag["href"].strip()
+        if not href:
+            continue
+
+        # Skip non-page links (javascript, mailto, etc.)
+        href_l = href.lower()
+        if href_l.startswith(("javascript:", "mailto:", "tel:", "data:")) or href_l.startswith("#"):
+            continue
+
+        # Make it an absolute URL and remove the fragment
+        try:
+            absolute = urljoin(base_url, href)
+        except Exception:
+            continue
+
+        if "#" in absolute:
+            absolute = absolute.split("#", 1)[0]
+        absolute = absolute.strip()
+
+        # Make sure there are no empty or duplicate links
+        if not absolute or absolute in seen_set:
+            continue
+
+        seen_set.add(absolute)
+        out_list.append(absolute)
+
+    return out_list
+
+# Only crawl these links
+ALLOWED_SUBLINK = (".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu")
+ALLOWED_LINK = ("ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu")
 
 def is_valid(url):
+    # Decide whether to crawl this url or not. 
+    # If you decide to crawl it, return True; otherwise return False.
+    # There are already some conditions that return False.
+
     try:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
@@ -63,7 +179,7 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", path)
 
     except TypeError:
         print ("TypeError for ", parsed)
