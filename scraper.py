@@ -18,13 +18,43 @@ def extract_next_links(url, resp):
     return list()
 
 def is_valid(url):
-    # Decide whether to crawl this url or not. 
-    # If you decide to crawl it, return True; otherwise return False.
-    # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+        hostname = (parsed.hostname or "").lower().strip(".") #gets hostname stuffix - Yaman and Majd
+        if not hostname:
+            return False
+
+        allowed_suffixes = ( #allowed suffixes - Yaman and Majd
+            "ics.uci.edu",
+            "cs.uci.edu",
+            "informatics.uci.edu",
+            "stat.uci.edu",
+        )
+        #simply checks if the hostname end with any of the allowed suffixes - Yaman and Majd
+        if not any(hostname == s or hostname.endswith(f".{s}") for s in allowed_suffixes):
+            return False
+
+        if parsed.port not in (None, 80, 443): #makes sure we're using web ports - Yaman and Majd
+            return False
+
+        path = (parsed.path or "/").lower() #gets path like /a/b/c/... - Yaman and Majd
+        query = (parsed.query or "").lower() #gets query like ?a=b&c=d... - Yaman and Majd
+
+        year = r"\d{4}"
+        month_or_day = r"\d{1,2}"
+        sep = r"[-_/]"
+        date_segment = r"(?:^|/)" + year + sep + month_or_day + r"(?:" + sep + month_or_day + r")?(?:/|$)"
+        if re.search(date_segment, path): #checks if the path contains a date but written with the help of ChatGPT - Yaman and Majd
+            return False
+
+        if re.search(r"[?&](page|p)=\d{4,}", query): #checks for pagination traps - Yaman and Majd
+            return False
+
+        if re.search(r"(admin|wiki)", parsed.path): #checks for admin and wiki pages/traps - Yaman and Majd
+            return False
+
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
