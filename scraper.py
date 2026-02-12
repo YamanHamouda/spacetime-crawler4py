@@ -1,7 +1,7 @@
 # scraper.py
 
 import re
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin, urldefrag
 from bs4 import BeautifulSoup
 import variables
 import similarity
@@ -124,10 +124,6 @@ def extract_next_links(url, resp):
         out_list.append(absolute)
 
     return out_list
-
-# Only crawl these links
-ALLOWED_SUBLINK = (".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu")
-ALLOWED_LINK = ("ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu")
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
