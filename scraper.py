@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -15,7 +15,51 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+
+    if not resp or not resp.raw_response:
+        return []
+
+    if resp.status != 200:
+        return []
+
+    raw = resp.raw_response
+    try:
+        content = raw.content
+    except AttributeError:
+        return []
+
+    if not content:
+        return []
+
+    # Pick best base URL for resolving relative links for the crawler
+    base_url = url
+    try:
+        if resp.url:
+            base_url = resp.url
+        if raw.url:
+            base_url = raw.url
+    except AttributeError:
+        pass
+
+    if not base_url:
+        return []
+
+    # Decode bytes and turn it into str
+    if isinstance(content, bytes):
+        encoding = "utf-8"
+        try:
+            if raw.encoding:
+                encoding = raw.encoding
+        except AttributeError:
+            pass
+
+        try:
+            content = content.decode(encoding, errors="replace")
+        except Exception:
+            content = content.decode("utf-8", errors="replace")
+
+    if not isinstance(content, str):
+        return []
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
