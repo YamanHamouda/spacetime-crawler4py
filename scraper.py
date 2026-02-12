@@ -40,6 +40,7 @@ def extract_next_links(url, resp):
     try:
         if resp.url:
             base_url = resp.url
+
         if raw.url:
             base_url = raw.url
     except AttributeError:
@@ -69,7 +70,6 @@ def extract_next_links(url, resp):
     except Exception:
         return []
 
-    # Count words (excluding stop words) for the "50 most common words" report.
     try:
         text = soup.get_text(separator=" ", strip=True)
         words = re.findall(r"[a-zA-Z0-9]+", text.lower())
@@ -79,8 +79,34 @@ def extract_next_links(url, resp):
     except Exception:
         pass
 
-    # (Links extraction comes next)
-    return []
+    out_list = []
+    seen_set = set()
+
+    for tag in soup.find_all("a", href=True):
+        href = tag["href"].strip()
+        if not href:
+            continue
+        href_l = href.lower()
+        if href_l.startswith(("javascript:", "mailto:", "tel:", "data:")) or href_l.startswith("#"):
+            continue
+
+        try:
+            absolute = urljoin(base_url, href)
+        except Exception:
+            continue
+
+        if "#" in absolute:
+            absolute = absolute.split("#", 1)[0]
+            
+        absolute = absolute.strip()
+
+        if not absolute or absolute in seen_set:
+            continue
+
+        seen_set.add(absolute)
+        out_list.append(absolute)
+
+    return out_list
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
