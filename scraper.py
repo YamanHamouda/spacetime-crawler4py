@@ -1,7 +1,10 @@
+# scraper.py
+
 import re
 from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 import variables
+import similarity
 
 # Accumulates the word counts other than stop words for the report
 word_counts = {}
@@ -70,8 +73,11 @@ def extract_next_links(url, resp):
     except Exception:
         return []
 
+    text = soup.get_text(separator=" ", strip=True)
+    if similarity.is_duplicate_page(text):
+        return []
+
     try:
-        text = soup.get_text(separator=" ", strip=True)
         words = re.findall(r"[a-zA-Z0-9]+", text.lower())
         for w in words:
             if w and w not in variables.stop_words:
@@ -108,14 +114,29 @@ def extract_next_links(url, resp):
 
     return out_list
 
+# Only crawl: *.ics.uci.edu, *.cs.uci.edu, *.informatics.uci.edu, *.stat.uci.edu
+ALLOWED_SUBLINK = (".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu")
+ALLOWED_LINK = ("ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu")
+
 def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
+
     try:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+
+        host = (parsed.netloc or "").lower()
+        if not host:
+            return False
+
+        if host not in ALLOWED_LINK and not any(host.endswith(d) for d in ALLOWED_SUBLINK):
+            return False
+
+        path = (parsed.path or "/").lower()
+        
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -124,7 +145,7 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", path)
 
     except TypeError:
         print ("TypeError for ", parsed)
