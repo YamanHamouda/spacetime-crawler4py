@@ -111,9 +111,7 @@ def extract_next_links(url, resp):
             absolute = urljoin(base_url, href)
         except Exception:
             continue
-
-        if "#" in absolute:
-            absolute = absolute.split("#", 1)[0]
+        absolute, _ = urldefrag(absolute)
         absolute = absolute.strip()
 
         # Make sure there are no empty or duplicate links
