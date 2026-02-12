@@ -1,5 +1,10 @@
 import re
 from urllib.parse import urlparse, urljoin
+from bs4 import BeautifulSoup
+import variables
+
+# Accumulates the word counts other than stop words for the report
+word_counts = {}
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -31,7 +36,6 @@ def extract_next_links(url, resp):
     if not content:
         return []
 
-    # Pick best base URL for resolving relative links for the crawler
     base_url = url
     try:
         if resp.url:
@@ -44,7 +48,6 @@ def extract_next_links(url, resp):
     if not base_url:
         return []
 
-    # Decode bytes and turn it into str
     if isinstance(content, bytes):
         encoding = "utf-8"
         try:
@@ -60,6 +63,24 @@ def extract_next_links(url, resp):
 
     if not isinstance(content, str):
         return []
+
+    try:
+        soup = BeautifulSoup(content, "lxml")
+    except Exception:
+        return []
+
+    # Count words (excluding stop words) for the "50 most common words" report.
+    try:
+        text = soup.get_text(separator=" ", strip=True)
+        words = re.findall(r"[a-zA-Z0-9]+", text.lower())
+        for w in words:
+            if w and w not in variables.stop_words:
+                word_counts[w] = word_counts.get(w, 0) + 1
+    except Exception:
+        pass
+
+    # (Links extraction comes next)
+    return []
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
