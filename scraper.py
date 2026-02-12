@@ -11,6 +11,8 @@ longest_page_count = 0  #word count of longest page
 word_counts = {}  #50 most common words
 subdomains = {}  #subdomains with page counts
 
+_page_count = 0  # track how many pages we've processed
+
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
@@ -87,6 +89,9 @@ def extract_next_links(url, resp):
         return []
 
     # Record this page for the report (unique pages, longest page, subdomains)
+    global _page_count
+    _page_count += 1
+
     page_url_defrag, _ = urldefrag(base_url)
     unique_pages.add(page_url_defrag)
     
@@ -111,7 +116,9 @@ def extract_next_links(url, resp):
     except Exception:
         pass
 
-    
+    # Print and save report progress every 10 pages
+    print_and_save_report()
+
     out_list = []   # links we will return which is one per URL from this page
     seen_set = set()  # URLs we already added from this page, skipping duplicates within the same page to maximize efficiency
     
@@ -141,6 +148,55 @@ def extract_next_links(url, resp):
         out_list.append(absolute)
 
     return out_list
+
+def print_and_save_report():
+    '''Print and save the 4 report metrics to report.txt'''
+    global _page_count
+
+    # Only print/save every 10 pages to avoid too much output
+    if _page_count % 10 != 0:
+        return
+
+    # 1. Unique pages count
+    unique_count = len(unique_pages)
+
+    # 2. Longest page
+    longest_info = f"{longest_page_url} ({longest_page_count} words)" if longest_page_url else "None yet"
+
+    # 3. Top 50 words (excluding stop words)
+    top50 = sorted(word_counts.items(), key=lambda x: (-x[1], x[0]))[:50]
+    top50_str = "\n   ".join([f"{i+1:2}. {word}: {count}" for i, (word, count) in enumerate(top50)])
+
+    # 4. Subdomains (alphabetically) with counts
+    subdomain_list = sorted([(k, len(v)) for k, v in subdomains.items()])
+    subdomain_str = "\n   ".join([f"{subdomain}, {count}" for subdomain, count in subdomain_list])
+
+    report_text = f"""
+        CRAWLER REPORT (as of {_page_count} pages processed)
+        {'='*60}
+
+        1. Unique pages (by URL, fragment discarded): {unique_count}
+
+        2. Longest page (by word count, HTML not counted):
+        {longest_info}
+
+        3. Top 50 most common words (excluding stop words), by frequency:
+        {top50_str if top50_str else '   (none yet)'}
+
+        4. Subdomains in uci.edu (alphabetically), with unique page count:
+        {subdomain_str if subdomain_str else '   (none yet)'}
+
+        {'='*60}
+        """
+
+    print(report_text)
+
+    # Save to file
+    try:
+        with open("report.txt", "w", encoding="utf-8") as f:
+            f.write(report_text)
+    except Exception:
+        pass
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
