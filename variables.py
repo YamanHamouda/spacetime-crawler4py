@@ -20,3 +20,6 @@ stop_words = { #imported all stop words given by prof - Adan
     "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours",
     "yourself", "yourselves"
 }
+
+unique_pages = []
+longest_page = 
