@@ -1,0 +1,68 @@
+Crawler Report
+
+1. Unique pages: 1010
+
+2. Longest page:
+https://ics.uci.edu/~cs224/ (83259 words)
+
+3. Top 50 most common words excluding stop words:
+1. const: 5064
+2. unsigned: 4939
+3. string: 2516
+4. data: 2363
+5. size: 2267
+6. void: 2222
+7. cc: 2174
+8. vector: 2074
+9. return: 1832
+10. include: 1805
+11. uint: 1752
+12. index: 1491
+13. endl: 1476
+14. id: 1362
+15. query: 1343
+16. float: 1323
+17. end: 1295
+18. src: 1207
+19. node: 1166
+20. file: 1130
+21. begin: 1128
+22. inc: 1096
+23. uci: 1088
+24. new: 1052
+25. cout: 1044
+26. back: 1043
+27. std: 1016
+28. statistics: 1005
+29. push: 999
+30. gramgen: 990
+31. int: 989
+32. iter: 971
+33. results: 895
+34. length: 884
+35. university: 845
+36. indexer: 831
+37. science: 825
+38. char: 822
+39. sepia: 790
+40. public: 784
+41. bool: 782
+42. first: 779
+43. else: 751
+44. struct: 723
+45. strcontainer: 721
+46. template: 690
+47. iterator: 679
+48. ics: 664
+49. threshold: 664
+50. config: 659
+
+4. Subdomains in uci.edu and with unique page count for them:
+asterix.ics.uci.edu, 4
+blocked.iplocationblock.com, 1
+chenli.ics.uci.edu, 2
+flamingo.ics.uci.edu, 887
+fr.ics.uci.edu, 3
+ics.uci.edu, 10
+tastier.ics.uci.edu, 1
+www.stat.uci.edu, 102
