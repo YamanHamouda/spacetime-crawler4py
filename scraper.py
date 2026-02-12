@@ -112,7 +112,20 @@ def extract_next_links(url, resp):
             longest_page_url = page_url_defrag
             longest_page_count = total_words
         for w in words:
-            if w and w not in variables.stop_words:
+            if not w:
+                continue
+            # Skip pure numbers or tokens that contain any digit
+            has_digit = False
+            for ch in w:
+                if ch.isdigit():
+                    has_digit = True
+                    break
+            if has_digit:
+                continue
+            # Skip single letters except "a" and "i"
+            if len(w) == 1 and w not in ("a", "i"):
+                continue
+            if w not in variables.stop_words:
                 word_counts[w] = word_counts.get(w, 0) + 1
     except Exception:
         pass
