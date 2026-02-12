@@ -94,8 +94,9 @@ def extract_next_links(url, resp):
         pass
 
     # Collect links from every <a href="..."> inside
-    out_list = []
-    seen_set = set()
+    out_list = []   # links we will return which is one per URL from this page
+    seen_set = set()  # URLs we already added from this page, skipping duplicates within the same page to maximize efficiency
+    
     for tag in soup.find_all("a", href=True):
         href = tag["href"].strip()
         if not href:
