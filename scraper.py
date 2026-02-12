@@ -7,7 +7,7 @@ import variables
 import similarity
 
 # Accumulates the word counts other than stop words for the report
-word_counts = {}
+word_counts = {} #3
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)

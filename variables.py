@@ -21,5 +21,6 @@ stop_words = { #imported all stop words given by prof - Adan
     "yourself", "yourselves"
 }
 
-unique_pages = []
-longest_page = 
+unique_pages = () #1
+longest_page = ("link",0) #link, word count #2
+
