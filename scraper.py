@@ -10,8 +10,7 @@ longest_page_url = ""  #URL of page with most words
 longest_page_count = 0  #word count of longest page
 word_counts = {}  #50 most common words
 subdomains = {}  #subdomains with page counts
-
-_page_count = 0  # track how many pages we've processed
+_page_count = 0  #track how many pages we've processed
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -30,7 +29,7 @@ def extract_next_links(url, resp):
 
     # Abubakr and Adan worked on this function together
 
-    # Only handle successful responses with a real response body that isn't empty, None, or False
+    #Only handle successful responses with a real response body that isn't empty, None, or False
     if not resp or not resp.raw_response:
         return []
     
@@ -46,7 +45,7 @@ def extract_next_links(url, resp):
     if not content:
         return []
 
-    # Current page URL that the crawler is on, it will turn short links into full URLs which is important
+    #Current page URL (short links) into full URLs which is important
     base_url = url
     try:
         if resp.url:
@@ -107,14 +106,14 @@ def extract_next_links(url, resp):
     try:
         global longest_page_url, longest_page_count
         words = re.findall(r"[a-zA-Z0-9]+", text.lower())
-        total_words = len(words)  # all words (for longest page)
+        total_words = len(words) 
         if total_words > longest_page_count:
             longest_page_url = page_url_defrag
             longest_page_count = total_words
         for w in words:
             if not w:
                 continue
-            # Skip pure numbers or tokens that contain any digit
+            #Skip pure numbers or tokens that contain any digit
             has_digit = False
             for ch in w:
                 if ch.isdigit():
@@ -122,7 +121,7 @@ def extract_next_links(url, resp):
                     break
             if has_digit:
                 continue
-            # Skip single letters except "a" and "i"
+            #Skip single letters except "a" and "i"
             if len(w) == 1 and w not in ("a", "i"):
                 continue
             if w not in variables.stop_words:
@@ -130,7 +129,7 @@ def extract_next_links(url, resp):
     except Exception:
         pass
 
-    # Print and save report progress every 10 pages
+    #Print and save report progress every 10 pages
     print_and_save_report()
 
     out_list = []   # links we will return which is one per URL from this page
@@ -202,26 +201,24 @@ def print_and_save_report():
 
     # Put everything together as simple lines
     lines = []
-    lines.append(f"CRAWLER REPORT (as of {_page_count} pages processed)")
-    lines.append("=" * 60)
+    lines.append(f"Crawler Report")
     lines.append("")
-    lines.append(f"1. Unique pages (by URL, fragment discarded): {unique_count}")
+    lines.append(f"1. Unique pages: {unique_count}")
     lines.append("")
-    lines.append("2. Longest page (by word count, HTML not counted):")
+    lines.append("2. Longest page:")
     lines.append(longest_info)
     lines.append("")
-    lines.append("3. Top 50 most common words (excluding stop words), by frequency:")
+    lines.append("3. Top 50 most common words excluding stop words:")
     lines.append(top_block)
     lines.append("")
-    lines.append("4. Subdomains in uci.edu (alphabetically), with unique page count:")
+    lines.append("4. Subdomains in uci.edu and unique page count for them:")
     lines.append(sub_block)
-    lines.append("=" * 60)
 
     report_text = "\n".join(lines)
 
     print(report_text)
 
-    # Save to file
+    #Save to file
     try:
         with open("report.txt", "w", encoding="utf-8") as f:
             f.write(report_text)
