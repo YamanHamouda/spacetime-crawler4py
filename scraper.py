@@ -24,6 +24,8 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
 
+    # Abubakr and Adan worked on this function together
+
     # Only handle successful responses with a real response body that isn't empty, None, or False
     if not resp or not resp.raw_response:
         return []
